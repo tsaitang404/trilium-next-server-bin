@@ -78,7 +78,9 @@ jobs:
           ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts
           echo "$AUR_KEY" > ~/.ssh/aur
           chmod 600 ~/.ssh/aur
-          git remote add aur ssh://aur@aur.archlinux.org/trilium-next-server-bin.git
+          git remote add aur ssh://aur@aur.archlinux.org/trilium-next-server-bin.git || true
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/aur" git fetch aur master
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/aur" git rebase aur/master
           GIT_SSH_COMMAND="ssh -i ~/.ssh/aur" git push aur master
 
       - name: Create release
