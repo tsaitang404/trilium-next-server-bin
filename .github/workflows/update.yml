@@ -73,15 +73,24 @@ jobs:
             echo "AUR_SSH_PRIVATE_KEY not set, skipping AUR push"
             exit 0
           fi
-          cd aur-repo
           mkdir -p ~/.ssh
           ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts
           echo "$AUR_KEY" > ~/.ssh/aur
           chmod 600 ~/.ssh/aur
-          git remote add aur ssh://aur@aur.archlinux.org/trilium-next-server-bin.git || true
-          GIT_SSH_COMMAND="ssh -i ~/.ssh/aur" git fetch aur master
-          GIT_SSH_COMMAND="ssh -i ~/.ssh/aur" git rebase aur/master
-          GIT_SSH_COMMAND="ssh -i ~/.ssh/aur" git push aur master
+
+          # Publish from an AUR-based clone so every push is a fast-forward.
+          git clone ssh://aur@aur.archlinux.org/trilium-next-server-bin.git aur-publish
+          cp aur-repo/PKGBUILD aur-publish/PKGBUILD
+          cp aur-repo/.SRCINFO aur-publish/.SRCINFO
+          git -C aur-publish config user.name "tsaitang404"
+          git -C aur-publish config user.email "tsaitang404@users.noreply.github.com"
+          git -C aur-publish add PKGBUILD .SRCINFO
+          if git -C aur-publish diff --cached --quiet; then
+            echo "AUR already has the generated package files"
+            exit 0
+          fi
+          git -C aur-publish commit -m "chore: bump to v${{ steps.trilium-version.outputs.latest }}"
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/aur" git -C aur-publish push origin HEAD:master
 
       - name: Create release
         if: steps.update.outputs.updated == 'true'
