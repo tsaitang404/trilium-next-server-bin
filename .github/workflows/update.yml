@@ -78,7 +78,7 @@ jobs:
           chmod 600 ~/.ssh/aur
 
           # Publish from an AUR-based clone so every push is a fast-forward.
-          git clone ssh://aur@aur.archlinux.org/trilium-next-server-bin.git aur-publish
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/aur" git clone ssh://aur@aur.archlinux.org/trilium-next-server-bin.git aur-publish
           cp aur-repo/PKGBUILD aur-publish/PKGBUILD
           cp aur-repo/.SRCINFO aur-publish/.SRCINFO
           git -C aur-publish config user.name "tsaitang404"
