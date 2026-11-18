@@ -1,0 +1,23 @@
+name: Validate AUR packaging (no publication)
+on:
+  push:
+    branches: ['validate/aur-metadata']
+permissions:
+  contents: read
+jobs:
+  arch-build:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    timeout-minutes: 20
+    steps:
+      - name: Install Arch dependencies
+        run: |
+          pacman -Syu --noconfirm --needed base-devel git python libxss nss
+          useradd --create-home builder
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check official release asset checksums
+        run: python .github/scripts/upstream.py
+      - name: Generate metadata, verify sources and clean build as non-root
+        run: bash .github/scripts/validate.sh
