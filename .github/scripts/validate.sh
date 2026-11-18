@@ -11,8 +11,16 @@ runuser -u builder -- bash -euo pipefail -c '
   makepkg --printsrcinfo > .SRCINFO
   makepkg --verifysource --noconfirm
   makepkg --cleanbuild --clean --force --noconfirm
-  package=$(makepkg --packagelist)
-  test -f "$package"
+  mapfile -t packages < <(makepkg --packagelist)
+  package=""
+  for candidate in "${packages[@]}"; do
+    test -f "$candidate"
+    sha256sum "$candidate"
+    if bsdtar -xOf "$candidate" .PKGINFO | grep -qx "pkgname = trilium-next-server-bin"; then
+      package="$candidate"
+    fi
+  done
+  test -n "$package"
   bsdtar -tf "$package" > package-files.txt
   for path in opt/trilium-next-server/trilium.sh usr/bin/trilium-next-server usr/lib/systemd/system/trilium-next-server.service; do
     grep -Fx "$path" package-files.txt
